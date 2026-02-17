@@ -13,9 +13,9 @@ primeTrade.ai/
 ## Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 16
+- **Framework**: Next.js 
 - **Language**: TypeScript
-- **Styling**: TailwindCSS v4
+- **Styling**: TailwindCSS
 - **Validation**: Zod
 - **Form Management**: React Hook Form
 - **HTTP Client**: Axios
@@ -49,10 +49,10 @@ primeTrade.ai/
 ### Task Management (CRUD)
 - Create tasks with title, description, status, priority
 - View all tasks with pagination
+- Drag and drop tasks to change status
 - Edit existing tasks
 - Delete tasks with confirmation
-- Search tasks by title/description
-- Filter tasks by status (pending, in-progress, completed)
+- Filter tasks by status (backlog, in-progress, completed)
 - Filter tasks by priority (low, medium, high)
 
 ### UI/UX
@@ -61,9 +61,7 @@ primeTrade.ai/
 - Error handling with user-friendly messages
 - Success notifications
 - Modern gradient backgrounds
-- Smooth animations and transitions
-- Password strength indicator
-- Empty states for lists
+- Smooth animations and transitions using motion and tailwindCSS
 - Status and priority badges
 
 ## Setup Instructions

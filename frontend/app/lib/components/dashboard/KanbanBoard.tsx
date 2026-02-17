@@ -7,6 +7,7 @@ import api from '@/app/lib/services/api';
 import { Task } from '@/app/lib/types';
 import { toast } from 'react-toastify';
 import { useAuthStore } from '../../store/authStore';
+import { useRouter } from 'next/navigation';
 
 
 //prebuilt component from hover.dev - https://www.hover.dev/components/boards
@@ -19,6 +20,7 @@ export const KanbanBoard = () => {
 };
 
 const Board = () => {
+  const router = useRouter();
   const {setUser, user} = useAuthStore();
   const [cards, setCards] = useState<CardType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,22 @@ const Board = () => {
     fetchTasks();
   }, [user]);
 
+  const checkAuth = async () => {
+    try {
+      const response = await api.get('/auth/checkAuth');
+      return response.data.success;
+    } catch (error) {
+      console.error('Failed to check auth:', error);
+      return false;
+    }
+  };
     const fetchTasks = useCallback(async () => {
+      const auth = await checkAuth();
+      if (!auth) {
+        toast.error('Token not available/ Expired.');
+        router.push('/login');
+        return;
+      }
     try {
       const response = await api.get('/tasks');
       const tasks: Task[] = response.data.data.tasks;
@@ -127,13 +144,22 @@ type ColumnProps = {
 };
 
 const Column = ({ title, headingColor, cards, column, setCards, loadingTasks, setLoadingTasks, mapColumnToStatus, reFetchTasks }: ColumnProps) => {
+  const router = useRouter();
   const [active, setActive] = useState(false);
-
+const checkAuth = async () => {
+    try {
+      const response = await api.get('/auth/checkAuth');
+      return response.data.success;
+    } catch (error) {
+      console.error('Failed to check auth:', error);
+      return false;
+    }
+  };
   const handleDragStart = (e: DragEvent, card: CardType) => {
     e.dataTransfer.setData('cardId', card.id);
   };
 
-  const handleDragEnd = async (e: DragEvent) => {
+  const handleDragEnd =useCallback( async (e: DragEvent) => {
     const cardId = e.dataTransfer.getData('cardId');
 
     setActive(false);
@@ -178,15 +204,25 @@ const Column = ({ title, headingColor, cards, column, setCards, loadingTasks, se
              await api.put(`/tasks/${cardId}`, { status: newStatus, title: cardToTransfer.title });
          } catch (error: any) {
              console.error("Failed to update task status", error);
-             
+             const checkAuth = async () => {
+                  try {
+                    const response = await api.get('/auth/checkAuth');
+                    return response.data.success;
+                  } catch (error) {
+                    console.error('Failed to check auth:', error);
+                    router.push('/login');
+                    return false;
+                  }
+                };
              if (error.response?.data?.errors) {
                  error.response.data.errors.forEach((err: any) => {
                      toast.error(err.msg);
                  });
-                 reFetchTasks();
+                 if(await checkAuth())reFetchTasks();
+                 
              } else {
                   toast.error(error.response?.data?.message || "Failed to update task. Refreshing...");
-                  reFetchTasks();
+                  if(await checkAuth())reFetchTasks(); // Check auth if token is expired redirect to login else refetch tasks to revert
              }
          } finally {
              setLoadingTasks(prev => {
@@ -195,9 +231,9 @@ const Column = ({ title, headingColor, cards, column, setCards, loadingTasks, se
                  return newSet;
              });
          }
-      }
-    }
-  };
+      }}
+    
+  },[cards, setCards, loadingTasks, setLoadingTasks, mapColumnToStatus, reFetchTasks]);
 
   const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
@@ -290,6 +326,7 @@ type CardProps = CardType & {
 };
 
 const Card = ({ title,description, id, column, priority, handleDragStart, isLoading }: CardProps) => {
+  const router = useRouter();
   return (
     <>
       <DropIndicator beforeId={id} column={column} />
@@ -309,7 +346,7 @@ const Card = ({ title,description, id, column, priority, handleDragStart, isLoad
                 <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
             </div>
         )}
-        <button onClick={(e)=>{e.stopPropagation();console.log("tapped")}}   className="absolute top-2 right-2 cursor-pointer"><SquareArrowOutUpRight className='size-4' /></button>
+        <button onClick={(e)=>{e.stopPropagation(); router.push(`/dashboard/task/${id}`);}}   className="absolute top-2 right-2 cursor-pointer hover:text-neutral-500 transition-colors"><SquareArrowOutUpRight className='size-4' /></button>
         <h2 className="text-sm text-neutral-900 dark:text-neutral-100">{title}</h2>
         <p   className="text-xs w-full truncate font-light text-neutral-900 dark:text-neutral-50 p-0.5">{description}</p>
         {priority && (
