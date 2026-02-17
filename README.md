@@ -1,6 +1,6 @@
-# PrimeTrade.ai - Full-Stack Task Management Application
+# PrimeTrade.ai - Task Management Application
 
-A modern task management application built with Next.js, TypeScript, TailwindCSS, Node.js, Express, and Prisma ORM.
+A drag and drop task management application built with Next.js, TypeScript, TailwindCSS, Node.js, Express, and Prisma ORM for internship assignment.
 
 ##  Project Structure
 
@@ -59,7 +59,7 @@ primeTrade.ai/
 - Responsive design (mobile, tablet, desktop)
 - Loading states and spinners
 - Error handling with user-friendly messages
-- Success notifications
+- Success notifications (react-toastify)
 - Modern gradient backgrounds
 - Smooth animations and transitions using motion and tailwindCSS
 - Status and priority badges
@@ -74,8 +74,8 @@ primeTrade.ai/
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd primeTrade.ai
+git clone https://github.com/mohd-Bilal-exe/PRIMETRADE.AI-ASSIGNMENT.git
+cd PRIMETRADE.AI-ASSIGNMENT
 ```
 
 ### 2. Backend Setup
@@ -112,7 +112,7 @@ npm install
 
 # Set up environment variables
 # Create .env.local file with:
-# NEXT_PUBLIC_API_URL=http://localhost:5000/api
+# NEXT_PUBLIC_API_URL=http://localhost:5000/backend
 
 # Start development server
 npm run dev
@@ -134,7 +134,7 @@ FRONTEND_URL=http://localhost:3000
 
 ### Frontend (.env.local)
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_API_URL=http://localhost:5000/backend
 ```
 
 ## Testing the Application
@@ -168,7 +168,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ### Authentication Endpoints
 - `POST /backend/auth/signup` - Register new user
 - `POST /backend/auth/login` - Login user
-
+- `POST /backend/auth/checkAuth` - Check authentication
 ### User Endpoints
 - `GET /backend/users/profile` - Get user profile (protected)
 - `PUT /backend/users/profile` - Update user profile (protected)
@@ -194,32 +194,13 @@ See backend README for detailed API documentation.
 
 ## Scalability Recommendations
 
-### Database
-- Add database indexes on frequently queried fields
-- Implement connection pooling
-- Use read replicas for heavy read operations
-- Implement caching with Redis
-
 ### Backend
-- Containerize with Docker
-- Implement horizontal scaling
 - Add rate limiting per user/IP
-- Use message queues for async operations
-- Add monitoring and logging (Winston, Sentry)
 
 ### Frontend
 - Implement code splitting and lazy loading
-- Use Next.js Image optimization
-- Add service worker for offline support
 - Implement optimistic UI updates
-- Use React Query or SWR for data caching
 
-### Infrastructure
-- Use reverse proxy (Nginx) for load balancing
-- Deploy frontend to Vercel/Netlify
-- Deploy backend to AWS/GCP/Azure
-- Set up CI/CD pipeline
-- Implement feature flags
 
 ## Deployment
 
@@ -277,6 +258,5 @@ frontend/
 
 ISC
 
-## Author
-
-Mohammad Bilal
+## Note 
+Readme generated using AI.

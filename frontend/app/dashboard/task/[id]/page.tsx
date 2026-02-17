@@ -191,9 +191,9 @@ export default function TaskDetailPage() {
                                             'text-neutral-600 dark:text-neutral-300'
                                 )}
                             >
-                                <option value="pending">Todo</option>
-                                <option value="in-progress">In Progress</option>
-                                <option value="completed">Done</option>
+                                <option className='text-yellow-300  dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="pending">Todo</option>
+                                <option className='text-blue-300 dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="in-progress">In Progress</option>
+                                <option className='text-green-300 dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="completed">Done</option>
                             </select>
                         </div>
                         <div className="flex items-center gap-3">
@@ -211,9 +211,9 @@ export default function TaskDetailPage() {
                                             'text-blue-500'
                                 )}
                             >
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
+                                <option className='text-yellow-300  dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="low">Low</option>
+                                <option className='text-orange-300 dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="medium">Medium</option>
+                                <option className='text-red-300 dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="high">High</option>
                             </select>
                         </div>
                         <div className="flex items-center gap-3 text-neutral-500 dark:text-neutral-400">
