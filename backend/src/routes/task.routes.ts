@@ -45,6 +45,7 @@ router.post('/', taskValidation, async (req: AuthRequest, res: Response) => {
       data: task,
     });
   } catch (error: any) {
+    console.error('Failed to create task:', error);
     res.status(400).json({
       success: false,
       message: error.message || 'Failed to create task',

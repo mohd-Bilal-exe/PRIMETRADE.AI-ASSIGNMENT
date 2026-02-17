@@ -14,6 +14,7 @@ interface AuthState {
   logout: () => void;
   setLoading: (loading: boolean) => void;
   setHydrated: (hydrated: boolean) => void;
+  setUser: (user: User | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -30,7 +31,7 @@ export const useAuthStore = create<AuthState>()(
         console.log('AuthStore: Hydration set to', hydrated);
         set({ isHydrated: hydrated });
       },
-
+      setUser: (user: User | null) => set({ user }),
       login: async (email: string, password: string) => {
         try {
           set({ isLoading: true });
@@ -44,10 +45,6 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
-
-          // Also store in localStorage for API interceptor
-          localStorage.setItem('token', userToken);
-          localStorage.setItem('user', JSON.stringify(userData));
         } catch (error: any) {
           set({ isLoading: false });
           throw new Error(error.response?.data?.message || 'Login failed');
@@ -66,10 +63,6 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           });
-
-          // Also store in localStorage for API interceptor
-          localStorage.setItem('token', userToken);
-          localStorage.setItem('user', JSON.stringify(userData));
         } catch (error: any) {
           set({ isLoading: false });
           throw new Error(error.response?.data?.message || 'Signup failed');
@@ -82,8 +75,6 @@ export const useAuthStore = create<AuthState>()(
           token: null,
           isAuthenticated: false,
         });
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
       },
     }),
     {
@@ -99,10 +90,3 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
-
-// Listen for 401 Unauthorized events from api.ts
-if (typeof window !== 'undefined') {
-  window.addEventListener('auth:unauthorized', () => {
-    useAuthStore.getState().logout();
-  });
-}

@@ -56,14 +56,14 @@ export function Sidebar() {
                   clsx(
                     'group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white'
-                      : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white'
+                      ? 'bg-neutral-200/60 text-neutral-900 dark:bg-neutral-800 dark:text-white'
+                      : 'text-neutral-600 hover:bg-neutral-200/60 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white'
                   )
                 )}
               >
                 <Icon
                   className={clsx(
-                    'mr-3 h-5 w-5 flex-shrink-0',
+                    'mr-3 h-5 w-5 shrink-0',
                     isActive ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 group-hover:text-neutral-500 dark:text-neutral-500 dark:group-hover:text-neutral-300'
                   )}
                 />

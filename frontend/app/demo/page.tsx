@@ -7,7 +7,7 @@ import {
   FormEvent,
 } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Delete, Plus, Trash } from "lucide-react";
+import { ArrowLeft, Delete, Flame, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import BackButton from "../lib/components/BackButton";
 
@@ -276,7 +276,7 @@ const BurnBarrel = ({
           : "border-neutral-500 bg-neutral-500/20 text-neutral-500"
       }`}
     >
-      {active ? <Delete className="animate-bounce" /> : <Trash />}
+      {active ? <Delete className="animate-bounce" /> : <Flame />}
     </div>
   );
 };

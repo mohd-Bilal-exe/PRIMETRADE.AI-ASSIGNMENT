@@ -19,7 +19,7 @@ primeTrade.ai/
 - **Validation**: Zod
 - **Form Management**: React Hook Form
 - **HTTP Client**: Axios
-- **State Management**: React Context API
+- **State Management**: zustand
 
 ### Backend
 - **Runtime**: Node.js

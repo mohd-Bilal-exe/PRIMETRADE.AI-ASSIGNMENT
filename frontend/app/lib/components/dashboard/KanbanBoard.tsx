@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, Dispatch, SetStateAction, FormEvent, DragEvent } from 'react';
+import React, { useState, useEffect, Dispatch, SetStateAction, FormEvent, DragEvent, useCallback } from 'react';
 import { Plus, Trash, Flame, Loader2, ArrowRight, Link, Link2, SquareArrowOutUpRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '@/app/lib/services/api';
 import { Task } from '@/app/lib/types';
+import { toast } from 'react-toastify';
+import { useAuthStore } from '../../store/authStore';
 
 
-//prebuilt compoennt from hover.dev - https://www.hover.dev/components/boards
+//prebuilt component from hover.dev - https://www.hover.dev/components/boards
 export const KanbanBoard = () => {
   return (
     <div className="h-full w-full ">
@@ -17,15 +19,16 @@ export const KanbanBoard = () => {
 };
 
 const Board = () => {
+  const {setUser, user} = useAuthStore();
   const [cards, setCards] = useState<CardType[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingTasks, setLoadingTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [user]);
 
-  const fetchTasks = async () => {
+    const fetchTasks = useCallback(async () => {
     try {
       const response = await api.get('/tasks');
       const tasks: Task[] = response.data.data.tasks;
@@ -37,50 +40,44 @@ const Board = () => {
         column: mapStatusToColumn(task.status),
         priority: task.priority,
       }));
+      
       setCards(formattedCards);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
     } finally {
       setLoading(false);
     }
+  }, [user, setUser]); 
+
+  const mapStatusToColumn = (status: "pending" | "in-progress" | "completed") => {
+    const statusMap = {
+      pending: 'backlog',
+      'in-progress': 'doing',
+      completed: 'done',
+    };
+    return statusMap[status]; 
+    
   };
 
-  const mapStatusToColumn = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'backlog';
-      case 'in-progress':
-        return 'doing';
-      case 'completed':
-        return 'done';
-      default:
-        return 'backlog';
-    }
-  };
-
-  const mapColumnToStatus = (column: string) => {
-    switch (column) {
-      case 'backlog':
-        return 'pending';
-      case 'doing':
-        return 'in-progress';
-      case 'done':
-        return 'completed';
-      default:
-        return 'pending';
-    }
+  const mapColumnToStatus = (column: "backlog" | "doing" | "done") => {
+    const statusMap = {
+      backlog: 'pending',
+      doing: 'in-progress',
+      done: 'completed',
+    };
+    return statusMap[column]; 
   };
 
   if (loading) {
     return (
         <div className="flex h-full w-full items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin " />
         </div>
     );
   }
 
   return (
-    <div className="flex md:flex-row flex-col justify-between h-full w-full gap-8 overflow-scroll p-12">
+    <div className="flex md:flex-row flex-col justify-between h-full w-full gap-8 overflow-y-scrol overflow-x-auto p-12 ">
       <Column
         title="Backlog"
         column="backlog"
@@ -90,6 +87,7 @@ const Board = () => {
         loadingTasks={loadingTasks}
         setLoadingTasks={setLoadingTasks}
         mapColumnToStatus={mapColumnToStatus}
+        reFetchTasks={()=>{fetchTasks();}}
       />
       <Column
         title="In Progress"
@@ -99,7 +97,7 @@ const Board = () => {
         setCards={setCards}
         loadingTasks={loadingTasks}
         setLoadingTasks={setLoadingTasks}
-        mapColumnToStatus={mapColumnToStatus}
+        mapColumnToStatus={mapColumnToStatus}reFetchTasks={()=>{fetchTasks();}}
       />
       <Column
         title="Completed"
@@ -109,7 +107,7 @@ const Board = () => {
         setCards={setCards}
         loadingTasks={loadingTasks}
         setLoadingTasks={setLoadingTasks}
-        mapColumnToStatus={mapColumnToStatus}
+        mapColumnToStatus={mapColumnToStatus}reFetchTasks={()=>{fetchTasks();}}
       />
       <BurnBarrel setCards={setCards} />
     </div>
@@ -124,10 +122,11 @@ type ColumnProps = {
   setCards: Dispatch<SetStateAction<CardType[]>>;
   loadingTasks: Set<string>;
   setLoadingTasks: Dispatch<SetStateAction<Set<string>>>;
-  mapColumnToStatus: (col: string) => string;
+  mapColumnToStatus: (col: "backlog" | "doing" | "done") => string;   
+  reFetchTasks: () => void;
 };
 
-const Column = ({ title, headingColor, cards, column, setCards, loadingTasks, setLoadingTasks, mapColumnToStatus }: ColumnProps) => {
+const Column = ({ title, headingColor, cards, column, setCards, loadingTasks, setLoadingTasks, mapColumnToStatus, reFetchTasks }: ColumnProps) => {
   const [active, setActive] = useState(false);
 
   const handleDragStart = (e: DragEvent, card: CardType) => {
@@ -153,9 +152,9 @@ const Column = ({ title, headingColor, cards, column, setCards, loadingTasks, se
       
       // If changing column, update status
       const oldColumn = cardToTransfer.column;
-      const newStatus = mapColumnToStatus(column);
+      const newStatus = mapColumnToStatus(column as "backlog" | "doing" | "done");
 
-      cardToTransfer = { ...cardToTransfer, column }; // Optimistic update of column
+      cardToTransfer = { ...cardToTransfer, column }; //  Locally update of column
 
       copy = copy.filter((c) => c.id !== cardId);
 
@@ -177,10 +176,18 @@ const Column = ({ title, headingColor, cards, column, setCards, loadingTasks, se
          try {
           
              await api.put(`/tasks/${cardId}`, { status: newStatus, title: cardToTransfer.title });
-         } catch (error) {
+         } catch (error: any) {
              console.error("Failed to update task status", error);
              
-             alert("Failed to update task. It will revert on refresh.");
+             if (error.response?.data?.errors) {
+                 error.response.data.errors.forEach((err: any) => {
+                     toast.error(err.msg);
+                 });
+                 reFetchTasks();
+             } else {
+                  toast.error(error.response?.data?.message || "Failed to update task. Refreshing...");
+                  reFetchTasks();
+             }
          } finally {
              setLoadingTasks(prev => {
                  const newSet = new Set(prev);
@@ -271,7 +278,7 @@ const Column = ({ title, headingColor, cards, column, setCards, loadingTasks, se
           );
         })}
         <DropIndicator beforeId={null} column={column} />
-        <AddCard column={column} setCards={setCards} mapColumnToStatus={mapColumnToStatus} />
+        <AddCard column={column} setCards={setCards} mapColumnToStatus={mapColumnToStatus} reFetchTasks={reFetchTasks} />
       </div>
     </div>
   );
@@ -291,10 +298,10 @@ const Card = ({ title,description, id, column, priority, handleDragStart, isLoad
         layoutId={id}
         draggable="true"
         onDragStart={(e) => handleDragStart(e as unknown as DragEvent, { title, id, column, priority })}
-        className={`relative cursor-grab rounded border p-3 active:cursor-grabbing ${
+        className={`shadow-lg dark:shadow-neutral-500/10 shadow-neutral-400/20 relative cursor-grab rounded border p-3 active:cursor-grabbing ${
              isLoading 
              ? 'opacity-50 border-neutral-300 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800' 
-             : 'border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-800'
+             : 'border-neutral-200 bg-neutral-200/60 dark:border-neutral-700 dark:bg-neutral-800'
         }`}
       >
         {isLoading && (
@@ -351,7 +358,7 @@ const BurnBarrel = ({ setCards }: { setCards: Dispatch<SetStateAction<CardType[]
   const handleDragEnd = async (e: DragEvent) => {
     const cardId = e.dataTransfer.getData('cardId');
 
-    // Optimistic Delete
+    //  Delete Locally
     setCards((pv) => pv.filter((c) => c.id !== cardId));
     setActive(false);
 
@@ -360,7 +367,7 @@ const BurnBarrel = ({ setCards }: { setCards: Dispatch<SetStateAction<CardType[]
     } catch (error) {
         console.error("Failed to delete task", error);
         alert("Failed to delete task.");
-        // Ideally re-fetch
+        
     }
   };
 
@@ -369,7 +376,7 @@ const BurnBarrel = ({ setCards }: { setCards: Dispatch<SetStateAction<CardType[]
       onDrop={handleDragEnd}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
-      className={`mt-10 grid h-56 w-56 shrink-0 place-content-center rounded border text-3xl ${
+      className={`shadow-xl dark:shadow-neutral-500/10 shadow-neutral-400/20 mt-10 grid h-56 w-56 shrink-0 place-content-center rounded border text-3xl ${
         active
           ? 'border-red-800 bg-red-800/20 text-red-500'
           : 'border-neutral-300 bg-neutral-200/20 text-neutral-400 dark:border-neutral-500 dark:bg-neutral-500/20 dark:text-neutral-500'
@@ -380,7 +387,7 @@ const BurnBarrel = ({ setCards }: { setCards: Dispatch<SetStateAction<CardType[]
   );
 };
 
-const AddCard = ({ column, setCards, mapColumnToStatus }: { column: string; setCards: Dispatch<SetStateAction<CardType[]>>; mapColumnToStatus: (c: string) => string }) => {
+const AddCard = ({ column, setCards, mapColumnToStatus,reFetchTasks }: { column: string; setCards: Dispatch<SetStateAction<CardType[]>>; mapColumnToStatus: (c: "backlog" | "doing" | "done") => string,reFetchTasks:()=>void }) => {
   const [text, setText] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
@@ -392,7 +399,7 @@ const AddCard = ({ column, setCards, mapColumnToStatus }: { column: string; setC
     if (!text.trim().length) return;
 
     const tempId = Math.random().toString();
-    const status = mapColumnToStatus(column);
+    const status = mapColumnToStatus(column as "backlog" | "doing" | "done");
 
     const newCard: CardType = {
       column,
@@ -402,19 +409,20 @@ const AddCard = ({ column, setCards, mapColumnToStatus }: { column: string; setC
       priority,
     };
 
-    // Optimistic Add
+    //  Add Locally
     setCards((pv) => [...pv, newCard]);
     setAdding(false);
     setText('');
 
     try {
+
         const response = await api.post('/tasks', {
             title: text.trim(),
             priority,description,
             status
         });
         
-        const createdTask = response.data.data; // Adjust based on actual API response
+        const createdTask = response.data.data; 
         
         // Replace temp card with real card (ID update)
         setCards((pv) => pv.map(c => c.id === tempId ? {
@@ -423,39 +431,48 @@ const AddCard = ({ column, setCards, mapColumnToStatus }: { column: string; setC
             column: column // maintain column
         } : c));
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to create task", error);
         setCards(pv => pv.filter(c => c.id !== tempId)); // Revert
-        alert("Failed to create task");
+        
+        if (error.response?.data?.errors) {
+            error.response.data.errors.forEach((err: any) => {
+                toast.error(err.msg);
+            });
+        } else {
+             toast.error(error.response?.data?.message || "Failed to create task");
+        }
+        reFetchTasks();
     }
   };
 
   return (
     <>
       {adding ? (
-        <motion.form layout onSubmit={handleSubmit} className='bg-neutral-300/5 p-2 rounded'>
+        <motion.form layout onSubmit={handleSubmit} className='bg-neutral-500/5 p-2 shadow-lg dark:shadow-neutral-500/10 shadow-neutral-400/20 rounded mt-3 border dark:border-neutral-700'>
           <input
+          required
             onChange={(e) => setText(e.target.value)}
             autoFocus
             placeholder="Task Title..."
-            className="w-full rounded border border-violet-400 bg-violet-400/20 p-3 text-sm text-neutral-900 placeholder-violet-300 focus:outline-0 dark:text-neutral-50 mb-2"
+            className="w-full rounded border border-violet-400 bg-violet-200/20 dark:bg-violet-400/20 p-3 text-sm text-neutral-900 placeholder-violet-300 focus:outline-0 dark:text-neutral-50 mb-2"
           />
            <textarea
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description..."
-            className="w-full h-20 rounded border border-violet-400 bg-violet-400/20 p-3 text-xs text-neutral-900 placeholder-violet-300 focus:outline-0 dark:text-neutral-50 bg-neutral-50 dark:bg-neutral-900 resize-none"
+            className="w-full rounded border border-violet-400 bg-violet-200/20 dark:bg-violet-400/20 p-3 text-sm text-neutral-900 placeholder-violet-300 focus:outline-0 dark:text-neutral-50 mb-2 resize-none"
           />
           
           <div className="mt-2">
             <label className="block text-xs text-neutral-500 mb-1">Priority</label>
             <select 
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as any)}
+                onChange={(e) =>  setPriority(e.target.value as "low" | "medium" | "high")}
                 className="w-full rounded border border-neutral-300 bg-transparent p-2 text-xs text-neutral-900 dark:border-neutral-700 dark:text-neutral-50"
             >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
+                <option className='text-yellow-300  dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="low">Low</option>
+                <option className='text-orange-300 dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="medium">Medium</option>
+                  <option className='text-red-300 dark:bg-neutral-800  bg-neutral-500/5 dark:border-0 hover:bg-neutral-700' value="high">High</option>
             </select>
           </div>
 
@@ -479,7 +496,7 @@ const AddCard = ({ column, setCards, mapColumnToStatus }: { column: string; setC
         <motion.button
           layout
           onClick={() => setAdding(true)}
-          className="flex w-full items-center gap-1.5 px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-neutral-900 dark:hover:text-neutral-50"
+          className="flex w-full items-center gap-1.5 px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-neutral-900 dark:hover:text-neutral-50 mt-2"
         >
           <span>Add a task here</span>
           <Plus className="h-4 w-4" />
@@ -488,6 +505,8 @@ const AddCard = ({ column, setCards, mapColumnToStatus }: { column: string; setC
     </>
   );
 };
+
+
 
 type CardType = {
   title: string;

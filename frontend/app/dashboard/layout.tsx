@@ -12,7 +12,7 @@ export default function DashboardLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-50 overflow-hidden">
+      <div className="flex h-screen text-neutral-900 bg-white dark:bg-neutral-900 dark:text-neutral-50 overflow-hidden transition-colors duration-500 ease-in-out">
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <TopNav />

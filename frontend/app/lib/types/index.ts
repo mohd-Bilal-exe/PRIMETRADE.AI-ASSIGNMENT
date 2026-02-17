@@ -4,6 +4,7 @@ export interface User {
   name: string;
   createdAt: string;
   updatedAt?: string;
+  backlog: number;
 }
 
 export interface AuthResponse {

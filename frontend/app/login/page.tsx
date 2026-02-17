@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Loader2, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '@/app/lib/store/authStore';
 import { loginSchema, LoginInput } from '@/app/lib/utils/validation';
 import BackButton from '../lib/components/BackButton';
@@ -15,7 +15,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const { login, isAuthenticated, isLoading: authLoading, isHydrated } = useAuthStore();
   const router = useRouter();
-
+  const [viewPassword, setViewPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -51,7 +51,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 px-4">
-       <BackButton/>
+       <BackButton path='/'/>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -100,13 +100,19 @@ export default function Login() {
                   <Lock className="h-5 w-5 text-neutral-400" />
                 </div>
                 <input
-                  type="password"
+                  type={viewPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 placeholder-neutral-400 focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:border-transparent transition-all outline-none ${
                     errors.password ? 'border-red-300 focus:ring-red-200' : 'border-neutral-200 dark:border-neutral-700'
                   }`}
                   {...register('password')}
                 />
+                <button onClick={(e ) => {
+                  e.preventDefault();
+                  setViewPassword(!viewPassword);
+                }} className="absolute inset-y-0 right-0 pr-3 flex items-center ">
+                  {!viewPassword ? <Eye className="h-5 w-5 text-neutral-400" /> : <EyeOff className="h-5 w-5 text-neutral-400" />}
+                </button>
               </div>
               {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
             </div>
